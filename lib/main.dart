@@ -1,122 +1,187 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chess_board/flutter_chess_board.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() {  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Flutter Chess',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      // Start the app at the color selection screen
+      home: const ColorSelectionScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+// ==================================================================
+// 1. Color Selection Screen
+// ==================================================================
+class ColorSelectionScreen extends StatelessWidget {
+  const ColorSelectionScreen({super.key});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter+=3;
-    });
+  // Function to navigate to the next screen, passing the chosen color
+  void _selectColor(BuildContext context, PlayerColor color) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => TimeSelectionScreen(selectedColor: color),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
+        title: const Text('Flutter Chess'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          children: [
+            const Text(
+              'Choose Your Color',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 40),
+            // "Play as White" Button
+            ElevatedButton(
+              onPressed: () => _selectColor(context, PlayerColor.white),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(250, 70),
+                textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              child: const Text('Play as White'),
+            ),
+            const SizedBox(height: 20),
+            // "Play as Black" Button
+            ElevatedButton(
+              onPressed: () => _selectColor(context, PlayerColor.black),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(250, 70),
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              child: const Text('Play as Black'),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+// ==================================================================
+// 2. Time Control Selection Screen
+// ==================================================================
+class TimeSelectionScreen extends StatelessWidget {
+  final PlayerColor selectedColor;
+
+  const TimeSelectionScreen({super.key, required this.selectedColor});
+
+  // Function to navigate to the final game screen
+  void _selectTime(BuildContext context, String timeControl) {
+    // Use pushReplacement to avoid stacking menus infinitely
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => GameScreen(
+          playerColor: selectedColor,
+          timeControl: timeControl,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Select Time Control'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Choose Time Control',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 40),
+            // Time control buttons
+            _buildTimeButton(context, '3 + 0'),
+            const SizedBox(height: 20),
+            _buildTimeButton(context, '5 + 0'),
+            const SizedBox(height: 20),
+            _buildTimeButton(context, '10 + 10'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper widget to build the time buttons consistently
+  Widget _buildTimeButton(BuildContext context, String time) {
+    return ElevatedButton(
+      onPressed: () => _selectTime(context, time),
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(200, 60),
+        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+      ),
+      child: Text(time),
+    );
+  }
+}
+
+// ==================================================================
+// 3. Game Screen
+// ==================================================================
+class GameScreen extends StatefulWidget {
+  final PlayerColor playerColor;
+  final String timeControl;
+
+  const GameScreen({
+    super.key,
+    required this.playerColor,
+    required this.timeControl,
+  });
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  final ChessBoardController _controller = ChessBoardController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Game: ${widget.timeControl}'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ChessBoard(
+            controller: _controller,
+            // The board is oriented based on the color chosen in the first menu
+            boardOrientation: widget.playerColor,
+            boardColor: BoardColor.green,
+            // You can add onMove and other callbacks here later
+          ),
+        ),
+      ),
     );
   }
 }
